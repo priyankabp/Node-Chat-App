@@ -11,18 +11,26 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 var dbUrl = 'mongodb://dbuser:dbuser1@ds121753.mlab.com:21753/learning-node'
 
-var messages = [
-    { name: 'Tim', message: 'Hi' },
-    { name: 'Jane', message: 'Hello' },
-]
+var Message = mongoose.model('Message', {
+    name: String,
+    message: String
+});
+
 app.get('/messages', (req, res) => {
-    res.send(messages);
+    Message.find({}, (err, messages) => {
+        res.send(messages);
+    })
 })
 
 app.post('/messages', (req, res) => {
-    messages.push(req.body);
-    io.emit('message', req.body);
-    res.sendStatus(200);
+    var message = new Message(req.body);
+    message.save((err) => {
+        if (err) {
+            sendStatus(500);
+        }
+        io.emit('message', req.body);
+        res.sendStatus(200);
+    })
 })
 
 io.on('connection', (socket) => {
